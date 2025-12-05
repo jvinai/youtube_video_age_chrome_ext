@@ -47,3 +47,22 @@
   background-color: #F44336 !important;
   color: #FFFFFF !important;
 }
+
+/* Live stream indicator - Blue circle */
+.yt-live-indicator {
+  position: relative;
+  padding-right: 14px !important;
+}
+
+.yt-live-indicator::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 10px;
+  height: 10px;
+  background-color: #2196F3;
+  border-radius: 50%;
+  box-shadow: 0 0 4px rgba(33, 150, 243, 0.5);
+}

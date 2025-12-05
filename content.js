@@ -174,10 +174,65 @@ const STREAMED_INDICATORS = [
   '配信済み', 'ストリーミング', '스트리밍', '直播',
 ];
 
-// Build regex pattern for time units
-const timeUnitPattern = Object.values(TIME_UNITS).flat().join('|');
-const agoPattern = AGO_INDICATORS.join('|');
-const streamedPattern = STREAMED_INDICATORS.join('|');
+// "Watching" indicators for live streams (all languages)
+const WATCHING_INDICATORS = [
+  // English
+  'watching',
+  // French
+  'spectateurs', 'regardent', 'personnes regardent',
+  // Spanish
+  'viendo', 'mirando', 'personas viendo',
+  // Portuguese
+  'assistindo', 'espectadores', 'pessoas assistindo',
+  // German
+  'zuschauer', 'schauen zu', 'schauen',
+  // Italian
+  'stanno guardando', 'guardano', 'spettatori',
+  // Russian
+  'смотрят', 'зрителей', 'зритель', 'смотрит',
+  // Polish
+  'ogląda', 'oglądają', 'widzów',
+  // Dutch
+  'kijken', 'aan het kijken', 'kijkers',
+  // Turkish
+  'izliyor', 'izleniyor', 'kişi izliyor',
+  // Vietnamese
+  'đang xem', 'người đang xem',
+  // Thai
+  'กำลังรับชม', 'คนดู', 'กำลังดู',
+  // Hindi
+  'देख रहे हैं', 'दर्शक', 'लोग देख रहे हैं',
+  // Arabic
+  'يشاهدون', 'مشاهد', 'يشاهد',
+  // Japanese
+  '人が視聴中', '視聴中', '人視聴中',
+  // Korean
+  '명 시청 중', '시청 중', '명이 시청 중',
+  // Chinese (Simplified & Traditional)
+  '人正在观看', '正在观看', '人正在觀看', '正在觀看', '观看',
+  // Indonesian
+  'menonton', 'sedang menonton',
+  // Czech
+  'sleduje', 'diváků',
+  // Greek
+  'παρακολουθούν',
+  // Hungarian
+  'nézi', 'nézik',
+  // Romanian
+  'vizionează', 'se uită',
+  // Swedish
+  'tittar', 'tittare',
+  // Finnish
+  'katsoo', 'katsojaa',
+  // Norwegian
+  'ser på', 'seere',
+  // Danish
+  'ser', 'seere',
+  // Hebrew
+  'צופים', 'צופה',
+  // Ukrainian
+  'дивляться', 'глядачів',
+];
 
 function parseRelativeTime(text) {
   if (!text) return null;
@@ -277,11 +332,36 @@ function looksLikeRelativeTime(text) {
   return AGO_INDICATORS.some(indicator => text.toLowerCase().includes(indicator.toLowerCase()));
 }
 
+// Check if text indicates a live stream (e.g., "7 watching", "1.2K watching")
+function isLiveStream(text) {
+  if (!text) return false;
+  const normalizedText = text.toLowerCase().trim();
+
+  // Must contain a number (viewer count)
+  if (!/[\d,\.]+[kKmM]?\s/.test(normalizedText) && !/\s[\d,\.]+[kKmM]?/.test(normalizedText) && !/^[\d,\.]+[kKmM]?/.test(normalizedText)) {
+    // Also check for number patterns like "1,234" or "1.2K"
+    if (!/\d/.test(normalizedText)) return false;
+  }
+
+  // Check for watching indicators
+  return WATCHING_INDICATORS.some(indicator =>
+    normalizedText.includes(indicator.toLowerCase())
+  );
+}
+
 function highlightElement(element) {
   // Skip if already processed
   if (element.dataset.ageHighlighted) return;
 
   const text = element.textContent.trim();
+
+  // First check if it's a live stream
+  if (isLiveStream(text)) {
+    element.classList.add('yt-live-indicator');
+    element.dataset.ageHighlighted = 'true';
+    return;
+  }
+
   const ageInMs = parseRelativeTime(text);
 
   if (ageInMs !== null) {
@@ -367,8 +447,8 @@ function highlightDateElements() {
     // Find spans that might contain dates but weren't caught by known selectors
     container.querySelectorAll('span:not([data-age-highlighted])').forEach(span => {
       const text = span.textContent.trim();
-      // Only match if text looks like a relative time (avoid matching nested elements)
-      if (looksLikeRelativeTime(text)) {
+      // Only match if text looks like a relative time or live stream (avoid matching nested elements)
+      if (looksLikeRelativeTime(text) || isLiveStream(text)) {
         highlightElement(span);
       }
     });

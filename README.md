@@ -15,6 +15,9 @@ A Chrome extension that highlights YouTube video publish dates with color-coded 
 | Less than 1 year | Orange | `#FF9800` |
 | Less than 2 years | Deep Orange | `#FF5722` |
 | More than 2 years | Red | `#F44336` |
+| **Live stream** | Blue circle | `#2196F3` |
+
+Live streams display a blue circle indicator to the right of the viewer count (e.g., "7 watching 🔵").
 
 ## Installation
 

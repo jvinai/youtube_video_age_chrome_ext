@@ -35,7 +35,7 @@ const TIME_UNITS = {
   ],
   minute: [
     'minute', 'minutes', 'min', 'mins', 'm',
-    'minuto', 'minutos',             // Spanish/Italian/Portuguese
+    'minuto', 'minutos', 'minuti',   // Spanish/Italian/Portuguese
     'минута', 'минуты', 'минут', 'мин', // Russian
     'минуту',                        // Russian accusative
     'minuta', 'minuty', 'minut',     // Polish
@@ -257,19 +257,29 @@ function parseRelativeTime(text) {
   if (!hasAgoIndicator) return null;
 
   // Find which time unit is present
+  // Sort translations by length (longest first) to avoid partial matches
   let matchedUnit = null;
+
   for (const [unit, translations] of Object.entries(TIME_UNITS)) {
-    for (const translation of translations) {
-      // Use word boundary or character boundary matching
-      // For CJK characters, just check if present
-      const isCJK = /[\u3000-\u9fff\uac00-\ud7af]/.test(translation);
-      if (isCJK) {
-        if (normalizedText.includes(translation)) {
+    // Sort by length descending to match longer strings first
+    const sortedTranslations = [...translations].sort((a, b) => b.length - a.length);
+
+    for (const translation of sortedTranslations) {
+      // Check if translation uses non-Latin script (CJK, Cyrillic, Arabic, Thai, etc.)
+      const isNonLatin = /[^\u0000-\u007F]/.test(translation);
+
+      // Skip single-character Latin translations (too prone to false positives)
+      // But allow single-character CJK (e.g., 分, 日, 年)
+      if (translation.length === 1 && !isNonLatin) continue;
+
+      if (isNonLatin) {
+        // For non-Latin scripts, use simple includes (word boundaries don't work)
+        if (normalizedText.includes(translation.toLowerCase())) {
           matchedUnit = unit;
           break;
         }
       } else {
-        // For non-CJK, use word boundary
+        // For Latin script, use word boundary
         const regex = new RegExp(`\\b${escapeRegex(translation)}\\b`, 'i');
         if (regex.test(normalizedText)) {
           matchedUnit = unit;
@@ -349,11 +359,44 @@ function isLiveStream(text) {
   );
 }
 
+// Check if element is inside a video title (should not be highlighted)
+function isInsideTitle(element) {
+  let parent = element;
+  while (parent) {
+    // Check for title-related IDs and classes
+    const id = parent.id || '';
+    const className = parent.className || '';
+
+    if (
+      id === 'video-title' ||
+      id === 'movie-title' ||
+      id === 'title' ||
+      /\btitle\b/i.test(className) ||
+      /\bvideo-title\b/i.test(className) ||
+      parent.tagName === 'H1' ||
+      parent.tagName === 'H2' ||
+      parent.tagName === 'H3' ||
+      (parent.tagName === 'A' && parent.id === 'video-title-link') ||
+      (parent.tagName === 'YT-FORMATTED-STRING' && parent.id === 'video-title')
+    ) {
+      return true;
+    }
+    parent = parent.parentElement;
+  }
+  return false;
+}
+
 function highlightElement(element) {
   // Skip if already processed
   if (element.dataset.ageHighlighted) return;
 
+  // Skip if inside a video title
+  if (isInsideTitle(element)) return;
+
   const text = element.textContent.trim();
+
+  // Skip if text is too long to be a date/viewer count (likely a title)
+  if (text.length > 50) return;
 
   // First check if it's a live stream
   if (isLiveStream(text)) {
@@ -455,38 +498,57 @@ function highlightDateElements() {
   });
 }
 
-// Run on initial load
-highlightDateElements();
+// Only run browser-specific code if we're in a browser environment
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+  // Run on initial load
+  highlightDateElements();
 
-// Use MutationObserver to handle dynamically loaded content
-const observer = new MutationObserver((mutations) => {
-  let shouldUpdate = false;
+  // Use MutationObserver to handle dynamically loaded content
+  const observer = new MutationObserver((mutations) => {
+    let shouldUpdate = false;
 
-  for (const mutation of mutations) {
-    if (mutation.addedNodes.length > 0) {
-      shouldUpdate = true;
-      break;
+    for (const mutation of mutations) {
+      if (mutation.addedNodes.length > 0) {
+        shouldUpdate = true;
+        break;
+      }
     }
-  }
 
-  if (shouldUpdate) {
-    // Debounce updates
-    clearTimeout(window.ageHighlighterTimeout);
-    window.ageHighlighterTimeout = setTimeout(highlightDateElements, 100);
-  }
-});
+    if (shouldUpdate) {
+      // Debounce updates
+      clearTimeout(window.ageHighlighterTimeout);
+      window.ageHighlighterTimeout = setTimeout(highlightDateElements, 100);
+    }
+  });
 
-observer.observe(document.body, {
-  childList: true,
-  subtree: true
-});
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
 
-// Also run when navigating (YouTube is a SPA)
-let lastUrl = location.href;
-new MutationObserver(() => {
-  const url = location.href;
-  if (url !== lastUrl) {
-    lastUrl = url;
-    setTimeout(highlightDateElements, 500);
-  }
-}).observe(document, { subtree: true, childList: true });
+  // Also run when navigating (YouTube is a SPA)
+  let lastUrl = location.href;
+  new MutationObserver(() => {
+    const url = location.href;
+    if (url !== lastUrl) {
+      lastUrl = url;
+      setTimeout(highlightDateElements, 500);
+    }
+  }).observe(document, { subtree: true, childList: true });
+}
+
+// Export functions for testing (Node.js environment)
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    AGE_THRESHOLDS,
+    TIME_UNITS,
+    AGO_INDICATORS,
+    WATCHING_INDICATORS,
+    parseRelativeTime,
+    calculateAge,
+    getAgeClass,
+    isLiveStream,
+    looksLikeRelativeTime,
+    escapeRegex
+  };
+}

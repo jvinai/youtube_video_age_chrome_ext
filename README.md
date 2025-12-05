@@ -81,6 +81,23 @@ If colors stop appearing after a YouTube update, the fallback should still work.
 - `manifest.json` - Extension configuration
 - `content.js` - Main script that finds and highlights dates (includes all language translations)
 - `styles.css` - Color definitions using Material Design colors
+- `content.test.js` - Unit tests
+
+## Testing
+
+```bash
+# Install dependencies
+npm install
+
+# Run tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm run test:coverage
+```
 
 ## Contributing
 

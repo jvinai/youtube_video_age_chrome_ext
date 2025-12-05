@@ -1,0 +1,49 @@
+/* YouTube Video Age Highlighter - Material Design Colors */
+
+.yt-age-highlight {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* Less than 24 hours - Green 500 */
+.yt-age-less-24h {
+  background-color: #4CAF50 !important;
+  color: #FFFFFF !important;
+}
+
+/* Less than a week - Light Green 500 */
+.yt-age-less-week {
+  background-color: #8BC34A !important;
+  color: #FFFFFF !important;
+}
+
+/* Less than a month - Lime 600 */
+.yt-age-less-month {
+  background-color: #C0CA33 !important;
+  color: #212121 !important;
+}
+
+/* Less than 6 months - Yellow 700 */
+.yt-age-less-6months {
+  background-color: #FBC02D !important;
+  color: #212121 !important;
+}
+
+/* Less than a year - Orange 500 */
+.yt-age-less-year {
+  background-color: #FF9800 !important;
+  color: #212121 !important;
+}
+
+/* Less than 2 years - Deep Orange 500 */
+.yt-age-less-2years {
+  background-color: #FF5722 !important;
+  color: #FFFFFF !important;
+}
+
+/* More than 2 years - Red 500 */
+.yt-age-more-2years {
+  background-color: #F44336 !important;
+  color: #FFFFFF !important;
+}

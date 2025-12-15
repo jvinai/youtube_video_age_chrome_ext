@@ -8,7 +8,8 @@ const {
   getAgeClass,
   isLiveStream,
   looksLikeRelativeTime,
-  escapeRegex
+  escapeRegex,
+  isInsideComments
 } = require('./content.js');
 
 describe('calculateAge', () => {
@@ -339,5 +340,62 @@ describe('constants', () => {
 
   test('WATCHING_INDICATORS contains English "watching"', () => {
     expect(WATCHING_INDICATORS).toContain('watching');
+  });
+});
+
+describe('isInsideComments', () => {
+  test('returns true for element inside ytd-comments', () => {
+    const commentsSection = document.createElement('ytd-comments');
+    const span = document.createElement('span');
+    commentsSection.appendChild(span);
+    document.body.appendChild(commentsSection);
+    expect(isInsideComments(span)).toBe(true);
+    document.body.removeChild(commentsSection);
+  });
+
+  test('returns true for element inside ytd-comment-thread-renderer', () => {
+    const commentThread = document.createElement('ytd-comment-thread-renderer');
+    const span = document.createElement('span');
+    commentThread.appendChild(span);
+    document.body.appendChild(commentThread);
+    expect(isInsideComments(span)).toBe(true);
+    document.body.removeChild(commentThread);
+  });
+
+  test('returns true for element inside ytd-comment-renderer', () => {
+    const comment = document.createElement('ytd-comment-renderer');
+    const span = document.createElement('span');
+    comment.appendChild(span);
+    document.body.appendChild(comment);
+    expect(isInsideComments(span)).toBe(true);
+    document.body.removeChild(comment);
+  });
+
+  test('returns true for element inside ytd-comment-view-model', () => {
+    const comment = document.createElement('ytd-comment-view-model');
+    const span = document.createElement('span');
+    comment.appendChild(span);
+    document.body.appendChild(comment);
+    expect(isInsideComments(span)).toBe(true);
+    document.body.removeChild(comment);
+  });
+
+  test('returns true for element inside element with id="comments"', () => {
+    const comments = document.createElement('div');
+    comments.id = 'comments';
+    const span = document.createElement('span');
+    comments.appendChild(span);
+    document.body.appendChild(comments);
+    expect(isInsideComments(span)).toBe(true);
+    document.body.removeChild(comments);
+  });
+
+  test('returns false for element outside comments', () => {
+    const videoRenderer = document.createElement('ytd-video-renderer');
+    const span = document.createElement('span');
+    videoRenderer.appendChild(span);
+    document.body.appendChild(videoRenderer);
+    expect(isInsideComments(span)).toBe(false);
+    document.body.removeChild(videoRenderer);
   });
 });

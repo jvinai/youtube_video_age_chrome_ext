@@ -386,12 +386,38 @@ function isInsideTitle(element) {
   return false;
 }
 
+// Check if element is inside a comments section (should not be highlighted)
+function isInsideComments(element) {
+  let parent = element;
+  while (parent) {
+    const tagName = parent.tagName || '';
+    const id = parent.id || '';
+
+    if (
+      tagName === 'YTD-COMMENTS' ||
+      tagName === 'YTD-COMMENT-THREAD-RENDERER' ||
+      tagName === 'YTD-COMMENT-RENDERER' ||
+      tagName === 'YTD-COMMENT-VIEW-MODEL' ||
+      tagName === 'YTD-COMMENT-REPLIES-RENDERER' ||
+      id === 'comments' ||
+      id === 'comment-section'
+    ) {
+      return true;
+    }
+    parent = parent.parentElement;
+  }
+  return false;
+}
+
 function highlightElement(element) {
   // Skip if already processed
   if (element.dataset.ageHighlighted) return;
 
   // Skip if inside a video title
   if (isInsideTitle(element)) return;
+
+  // Skip if inside comments section
+  if (isInsideComments(element)) return;
 
   const text = element.textContent.trim();
 
@@ -549,6 +575,7 @@ if (typeof module !== 'undefined' && module.exports) {
     getAgeClass,
     isLiveStream,
     looksLikeRelativeTime,
-    escapeRegex
+    escapeRegex,
+    isInsideComments
   };
 }
